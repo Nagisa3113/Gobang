@@ -4,7 +4,7 @@
 
 #include "Gobang.h"
 
-int searchDepth = 4;
+int searchDepth = 3;
 pair<int, int> bestStep;
 
 pair<int, int> directions[8] = {
@@ -371,3 +371,92 @@ int AlphaBeta(Gobang *s, int depth, int alpha, int beta) {
     }
     return alpha;
 }
+
+int FalphaBeta(Gobang *s, int depth, int alpha, int beta) {
+    int score;
+    int current = MINNUM;
+    if (s->isGameOver != 0) {
+        return MINNUM;
+    }
+    if (depth <= 0) {
+        return s->Evaluate();
+    }
+    auto steplists = s->GetNearbySteps();
+    int index = 0, count = steplists.size();
+    for (auto step : steplists) {
+        s->MakeMove(step);
+        score = -FalphaBeta(s, depth - 1, -beta, -alpha);
+        s->UnmakeMove();
+        if (score > current) {
+            current = score;
+            if (score >= alpha) {
+                alpha = score;
+                if (depth == searchDepth) {
+                    bestStep = step;
+                }
+            }
+            if (alpha >= beta) {
+                break;
+            }
+        }
+    }
+    return current;
+}
+
+void AspirationSearch(Gobang *s, int depth, int alpha, int beta) {
+    const int WINDOW = 1000;
+    int X;
+    int current;
+    X = FalphaBeta(s, depth - 1, MINNUM, MAXNUM);
+    current = FalphaBeta(s, depth, X - WINDOW, X + WINDOW);
+    if (current < X - WINDOW) {
+        FalphaBeta(s, searchDepth, MINNUM, X - WINDOW);
+    } else if (current > X + WINDOW) {
+        FalphaBeta(s, searchDepth, X + WINDOW, MAXNUM);
+    }
+}
+
+
+int PrincipalVariationSearch(Gobang *s, int depth, int alpha, int beta) {
+    int score;
+    int best;
+    int current = MINNUM;
+    if (s->isGameOver != 0) {
+        return MINNUM;
+    }
+    if (depth <= 0) {
+        return s->Evaluate();
+    }
+    auto steplists = s->GetNearbySteps();
+    int index = 0, count = steplists.size();
+    s->MakeMove(steplists[0]);
+    best = -PrincipalVariationSearch(s, depth - 1, -beta, -alpha);
+    s->UnmakeMove();
+    if (depth == searchDepth) {
+        bestStep = steplists[0];
+    }
+    for (int i = 1; i < count; i++) {
+        if (best < beta) {
+            if (best > alpha) {
+                alpha = best;
+            }
+        }
+        s->MakeMove(steplists[i]);
+        score = -PrincipalVariationSearch(s, depth - 1, -alpha - 1, -alpha);
+        if (score > alpha && score < beta) {
+            best = -PrincipalVariationSearch(s, depth - 1, -beta, -score);
+            if (depth == searchDepth) {
+                bestStep = steplists[i];
+            }
+        } else if (score > best) {
+            best = score;
+            if (depth == searchDepth) {
+                bestStep = steplists[i];
+            }
+        }
+        s->UnmakeMove();
+    }
+    return best;
+}
+
+

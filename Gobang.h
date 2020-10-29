@@ -108,6 +108,8 @@ pair<int, int> MCTS(Gobang *gobang);
 int NegaMax(Gobang *s, int depth);
 
 int AlphaBeta(Gobang *s, int depth, int alpha, int beta);
+void AspirationSearch(Gobang *s,int depth,int alpha, int beta);
+int PrincipalVariationSearch(Gobang *s, int depth, int alpha, int beta);
 
 //test
 //    { 0, -1, 0, 0, 0, },
